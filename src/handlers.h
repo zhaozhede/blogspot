@@ -21,6 +21,8 @@ void send_about_page(conn_ctx_t *ctx);
 void send_static_file(conn_ctx_t *ctx, const char *path);
 void send_static_favicon(conn_ctx_t *ctx);
 void send_static_jsencrypt(conn_ctx_t *ctx);
+/** 将 jsencrypt 内容内联发送（用于登录/注册页，避免二次请求导致加密库加载失败） */
+void send_jsencrypt_inline(conn_ctx_t *ctx);
 
 /* 登录/注册页（后台与前台统一登录）：show_error 是否显示错误，redir/post_id 为可选参数 */
 void send_login_page(conn_ctx_t *ctx, int show_error);

@@ -106,7 +106,7 @@ void handle_user_register(conn_ctx_t *ctx, sqlite3 *user_db, const char *body) {
  * @param body    表单 body（encrypted, redir）
  * 返回值：无
  */
-/* 统一登录：先试管理员，成功进 /admin；否则试普通用户，成功进 redir 或 / */
+/* 统一登录：先试管理员，成功进 /admin；否则试普通用户，成功进 redir 或 /；仅接受 encrypted（密码不明文传输） */
 void handle_unified_login(conn_ctx_t *ctx, sqlite3 *user_db, const char *body) {
     if (!body || !user_db) {
         send_unified_login_page(ctx, 1, NULL);
@@ -124,7 +124,7 @@ void handle_unified_login(conn_ctx_t *ctx, sqlite3 *user_db, const char *body) {
     free(copy);
     if (!encrypted || !encrypted[0]) {
         free(encrypted);
-        if (redir) { send_unified_login_page(ctx, 1, redir); free(redir); } else send_unified_login_page(ctx, 1, NULL);
+        if (redir) { send_unified_login_page(ctx, 1, redir); free(redir); } else { free(redir); send_unified_login_page(ctx, 1, NULL); }
         return;
     }
     for (char *p = encrypted; *p; p++) if (*p == ' ') *p = '+';
@@ -132,21 +132,22 @@ void handle_unified_login(conn_ctx_t *ctx, sqlite3 *user_db, const char *body) {
     char pwd[256];
     if (!auth_decrypt_credentials(encrypted, uname, sizeof(uname), pwd, sizeof(pwd))) {
         free(encrypted);
-        if (redir) { send_unified_login_page(ctx, 1, redir); free(redir); } else send_unified_login_page(ctx, 1, NULL);
+        if (redir) { send_unified_login_page(ctx, 1, redir); free(redir); } else { free(redir); send_unified_login_page(ctx, 1, NULL); }
         return;
     }
-    /* 先试管理员登录（与 admin 完全一致，需要 encrypted） */
+    /* 先试管理员登录 */
     if (auth_verify_login(encrypted)) {
         free(encrypted);
         char new_sid[65];
         if (auth_session_create(new_sid, sizeof(new_sid))) {
             send_redirect_with_cookie(ctx, "/blog/admin", "session", new_sid);
         } else {
-            if (redir) { send_unified_login_page(ctx, 1, redir); free(redir); } else send_unified_login_page(ctx, 1, NULL);
+            if (redir) { send_unified_login_page(ctx, 1, redir); free(redir); } else { free(redir); send_unified_login_page(ctx, 1, NULL); }
         }
         return;
     }
     free(encrypted);
+    /* 普通用户验证 */
     int user_id = 0;
     int rc = user_verify(user_db, uname, pwd, &user_id);
     if (rc == 1) {

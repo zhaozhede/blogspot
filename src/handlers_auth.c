@@ -54,11 +54,13 @@ void send_login_page(conn_ctx_t *ctx, int show_error) {
         "}"
         "@media(max-width:480px){main{margin:0 12px;padding:1.65rem 1.35rem;border-radius:20px;}}"
         "</style>"
-        "<script src=\"/blog/static/jsencrypt.min.js\"></script>"
-        "</head><body><main>"
-        "<h1>博客后台登录</h1>"
-        "<p id=\"loadHint\">正在加载加密库…</p>";
+        "<script>";
     conn_send(ctx, head, strlen(head));
+    send_jsencrypt_inline(ctx);
+    {
+        const char *tail = "</script></head><body><main><h1>博客后台登录</h1><p id=\"loadHint\"></p>";
+        conn_send(ctx, tail, strlen(tail));
+    }
     if (show_error) {
         const char *err_msg = "<p class=\"err\">账户或密码错误，请重试。</p>";
         conn_send(ctx, err_msg, strlen(err_msg));
@@ -70,21 +72,16 @@ void send_login_page(conn_ctx_t *ctx, int show_error) {
          "<input type=\"hidden\" name=\"encrypted\" id=\"encrypted\" value=\"\">"
          "<button type=\"submit\" id=\"loginBtn\">登录</button></form>"
          "<script>"
-         "window.addEventListener('load',function(){"
-         "var hint=document.getElementById('loadHint');"
-         "if(typeof JSEncrypt==='undefined'){ if(hint){ hint.textContent='加密库未加载，请刷新重试'; hint.style.color='#856404'; } return; }"
-         "if(hint) hint.textContent='';"
-         "document.getElementById('loginForm').onsubmit=function(e){ e.preventDefault();"
-         "try{"
-         "var u=document.querySelector('input[name=username]').value,p=document.querySelector('input[name=password]').value;"
+         "(function(){ var hint=document.getElementById('loadHint'); var formEl=document.getElementById('loginForm');"
+         "if(typeof JSEncrypt==='undefined'){ if(hint) hint.textContent='加密库异常，请刷新页面'; return; }"
+         "formEl.onsubmit=function(e){ e.preventDefault();"
+         "try{ var u=document.querySelector('input[name=username]').value,p=document.querySelector('input[name=password]').value;"
          "var pem=(document.getElementById('publicKey').textContent||'').trim();"
          "if(!pem){ alert('公钥未就绪'); return; }"
          "var enc=new JSEncrypt(); enc.setPublicKey(pem); var encStr=enc.encrypt(u+':'+p);"
          "if(!encStr){ alert('加密失败，请重试'); return; }"
          "document.getElementById('encrypted').value=encStr; document.querySelector('input[name=password]').value='';"
-         "this.submit();"
-         "}catch(err){ alert('登录出错: '+err.message); }"
-         "}; });"
+         "formEl.submit(); }catch(err){ alert('登录出错: '+err.message); } }; })();"
          "</script>"
          "<script type=\"text/plain\" id=\"publicKey\">";
     conn_send(ctx, form, strlen(form));
@@ -144,10 +141,13 @@ void send_unified_login_page(conn_ctx_t *ctx, int show_error, const char *redir)
         "}"
         "@media(max-width:480px){main{margin:0 12px;padding:1.65rem 1.35rem;border-radius:20px;}}"
         "</style>"
-        "<script src=\"/blog/static/jsencrypt.min.js\"></script>"
-        "</head><body><main>"
-        "<h1>登录</h1><p id=\"loadHint\">正在加载加密库…</p>";
+        "<script>";
     conn_send(ctx, head, strlen(head));
+    send_jsencrypt_inline(ctx);
+    {
+        const char *tail = "</script></head><body><main><h1>登录</h1><p id=\"loadHint\"></p>";
+        conn_send(ctx, tail, strlen(tail));
+    }
     if (show_error) {
         const char *err_msg = "<p class=\"err\">账户或密码错误，请重试。</p>";
         conn_send(ctx, err_msg, strlen(err_msg));
@@ -168,21 +168,16 @@ void send_unified_login_page(conn_ctx_t *ctx, int show_error, const char *redir)
          "<button type=\"submit\" id=\"loginBtn\">登录</button>"
          "</form><p><a href=\"/blog/register\">注册新用户</a></p>"
          "<script>"
-         "window.addEventListener('load',function(){"
-         "var hint=document.getElementById('loadHint');"
-         "if(typeof JSEncrypt==='undefined'){ if(hint){ hint.textContent='加密库未加载，请刷新重试'; hint.style.color='#856404'; } return; }"
-         "if(hint) hint.textContent='';"
-         "document.getElementById('loginForm').onsubmit=function(e){ e.preventDefault();"
-         "try{"
-         "var u=document.querySelector('input[name=username]').value,p=document.querySelector('input[name=password]').value;"
+         "(function(){ var hint=document.getElementById('loadHint'); var formEl=document.getElementById('loginForm');"
+         "if(typeof JSEncrypt==='undefined'){ if(hint) hint.textContent='加密库异常，请刷新页面'; return; }"
+         "formEl.onsubmit=function(e){ e.preventDefault();"
+         "try{ var u=document.querySelector('input[name=username]').value,p=document.querySelector('input[name=password]').value;"
          "var pem=(document.getElementById('publicKey').textContent||'').trim();"
          "if(!pem){ alert('公钥未就绪'); return; }"
          "var enc=new JSEncrypt(); enc.setPublicKey(pem); var encStr=enc.encrypt(u+':'+p);"
          "if(!encStr){ alert('加密失败，请重试'); return; }"
          "document.getElementById('encrypted').value=encStr; document.querySelector('input[name=password]').value='';"
-         "this.submit();"
-         "}catch(err){ alert('登录出错: '+err.message); }"
-         "}; });"
+         "formEl.submit(); }catch(err){ alert('登录出错: '+err.message); } }; })();"
          "</script>"
          "<script type=\"text/plain\" id=\"publicKey\">";
     conn_send(ctx, form_end, strlen(form_end));
@@ -242,10 +237,13 @@ void send_register_page(conn_ctx_t *ctx, int show_error, int post_id, const char
         "}"
         "@media(max-width:480px){main{margin:0 12px;padding:1.65rem 1.35rem;border-radius:20px;}}"
         "</style>"
-        "<script src=\"/blog/static/jsencrypt.min.js\"></script>"
-        "</head><body><main>"
-        "<h1>注册</h1><p id=\"loadHint\">正在加载加密库…</p>";
+        "<script>";
     conn_send(ctx, head, strlen(head));
+    send_jsencrypt_inline(ctx);
+    {
+        const char *t = "</script></head><body><main><h1>注册</h1><p id=\"loadHint\"></p>";
+        conn_send(ctx, t, strlen(t));
+    }
     if (show_error) {
         conn_send(ctx, "<p class=\"err\">注册失败（如用户名已存在），请重试。</p>", 52);
     }
@@ -261,21 +259,16 @@ void send_register_page(conn_ctx_t *ctx, int show_error, int post_id, const char
     conn_send(ctx, line, (size_t)n);
     const char *script =
         "<script>"
-        "window.addEventListener('load',function(){"
-        "var hint=document.getElementById('loadHint');"
-        "if(typeof JSEncrypt==='undefined'){ if(hint) hint.textContent='加密库未加载，请刷新重试'; return; }"
-        "if(hint) hint.textContent='';"
-        "document.getElementById('regForm').onsubmit=function(e){ e.preventDefault();"
-        "try{"
-        "var u=document.querySelector('input[name=username]').value,p=document.querySelector('input[name=password]').value;"
+        "(function(){ var hint=document.getElementById('loadHint'); var formEl=document.getElementById('regForm');"
+        "if(typeof JSEncrypt==='undefined'){ if(hint) hint.textContent='加密库异常，请刷新页面'; return; }"
+        "formEl.onsubmit=function(e){ e.preventDefault();"
+        "try{ var u=document.querySelector('input[name=username]').value,p=document.querySelector('input[name=password]').value;"
         "var pem=(document.getElementById('publicKey').textContent||'').trim();"
         "if(!pem){ alert('公钥未就绪'); return; }"
         "var enc=new JSEncrypt(); enc.setPublicKey(pem); var s=enc.encrypt(u+':'+p);"
         "if(!s){ alert('加密失败'); return; }"
         "document.getElementById('encrypted').value=s; document.querySelector('input[name=password]').value='';"
-        "this.submit();"
-        "}catch(err){ alert('注册出错: '+err.message); }"
-        "}; });"
+        "formEl.submit(); }catch(err){ alert('注册出错: '+err.message); } }; })();"
         "</script>"
         "<script type=\"text/plain\" id=\"publicKey\">";
     conn_send(ctx, script, strlen(script));

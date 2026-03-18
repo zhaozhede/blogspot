@@ -234,6 +234,49 @@ void send_static_file(conn_ctx_t *ctx, const char *path) {
 }
 
 /**
+ * send_jsencrypt_inline — 将 static/jsencrypt.min.js 内容内联发送到当前响应体
+ *
+ * 用于登录/注册页：把加密库直接嵌在 HTML 的 <script> 内，避免第二次 HTTP 请求，
+ * 从而消除「加密库加载失败」的随机性（网络/缓存导致 script 请求失败或未就绪）。
+ * 会对内容中的 </script> 转义为 <\/script>，避免提前闭合标签。
+ *
+ * @param ctx 连接上下文（须已发送 HTTP 头，正在发送 body）
+ */
+void send_jsencrypt_inline(conn_ctx_t *ctx) {
+    int fd = open("static/jsencrypt.min.js", O_RDONLY);
+    if (fd < 0) return;
+    struct stat st;
+    if (fstat(fd, &st) != 0 || st.st_size <= 0 || (size_t)st.st_size > 256 * 1024) {
+        close(fd);
+        return;
+    }
+    size_t fsize = (size_t)st.st_size;
+    char *in = (char *)malloc(fsize);
+    if (!in) { close(fd); return; }
+    size_t nread = 0;
+    while (nread < fsize) {
+        ssize_t r = read(fd, in + nread, fsize - nread);
+        if (r <= 0) break;
+        nread += (size_t)r;
+    }
+    close(fd);
+    if (nread != fsize) { free(in); return; }
+    static const char end_script[] = "</script>";
+    const size_t end_len = sizeof(end_script) - 1;
+    size_t i = 0;
+    while (i < fsize) {
+        if (i + end_len <= fsize && memcmp(in + i, end_script, end_len) == 0) {
+            conn_send(ctx, "<\\/script>", 10);
+            i += end_len;
+        } else {
+            conn_send(ctx, in + i, 1);
+            i++;
+        }
+    }
+    free(in);
+}
+
+/**
  * send_static_jsencrypt — 发送 /static/jsencrypt.min.js
  *
  * 功能：从 static/jsencrypt.min.js 读取并以 application/javascript 返回，最大 256KB。
